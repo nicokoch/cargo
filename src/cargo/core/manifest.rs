@@ -49,7 +49,8 @@ pub enum LibKind {
     Lib,
     Rlib,
     Dylib,
-    StaticLib
+    StaticLib,
+    CDyLib,
 }
 
 impl LibKind {
@@ -59,7 +60,8 @@ impl LibKind {
             "rlib" => Ok(LibKind::Rlib),
             "dylib" => Ok(LibKind::Dylib),
             "staticlib" => Ok(LibKind::StaticLib),
-            _ => Err(human(format!("crate-type \"{}\" was not one of lib|rlib|dylib|staticlib",
+            "cdylib" => Ok(LibKind::CDyLib),
+            _ => Err(human(format!("crate-type \"{}\" was not one of lib|rlib|dylib|staticlib|cdylib",
                                    string)))
         }
     }
@@ -70,7 +72,8 @@ impl LibKind {
             LibKind::Lib => "lib",
             LibKind::Rlib => "rlib",
             LibKind::Dylib => "dylib",
-            LibKind::StaticLib => "staticlib"
+            LibKind::StaticLib => "staticlib",
+            LibKind::CDyLib => "cdylib",
         }
     }
 }
@@ -337,7 +340,7 @@ impl Target {
             TargetKind::Lib(ref kinds) => {
                 kinds.iter().any(|k| {
                     match *k {
-                        LibKind::Lib | LibKind::Rlib | LibKind::Dylib => true,
+                        LibKind::Lib | LibKind::Rlib | LibKind::Dylib | LibKind::CDyLib => true,
                         LibKind::StaticLib => false,
                     }
                 })

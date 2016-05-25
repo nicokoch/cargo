@@ -328,7 +328,8 @@ impl<'a, 'cfg> Context<'a, 'cfg> {
             TargetKind::Lib(ref libs) => {
                 for lib in libs {
                     match *lib {
-                        LibKind::Dylib => {
+                        LibKind::Dylib | 
+                        LibKind::CDyLib => {
                             if let Ok((prefix, suffix)) = self.dylib(unit.kind) {
                                 ret.push(format!("{}{}{}", prefix, stem, suffix));
                             }
