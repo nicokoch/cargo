@@ -2136,3 +2136,77 @@ fn all_features_virtual_ws() {
         .with_stdout("f1\nf2\nf3\n")
         .run();
 }
+
+#[cargo_test]
+fn target_dependent_features() {
+    let p = project()
+        .file(
+            "Cargo.toml",
+            r#"
+            [workspace]
+            members = [
+                "crate_main",
+                "crate_dep",
+            ]
+        "#,
+        )
+        .file("crate_main/Cargo.toml",
+              r#"
+              [project]
+              name = "crate_main"
+              version = "0.1.0"
+              authors = []
+              workspace = ".."
+              edition = "2018"
+
+              [dependencies]
+              crate_dep = { path = "../crate_dep"}
+
+              [target.'cfg(target_os = "windows")'.dependencies]
+              crate_dep = { path = "../crate_dep", features = ["use_windows"] }
+
+              [target.'cfg(target_os = "linux")'.dependencies]
+              crate_dep = { path = "../crate_dep", features = ["use_linux"] }
+
+              [target.'cfg(target_os = "macos")'.dependencies]
+              crate_dep = { path = "../crate_dep", features = ["use_macos"] }
+        "#
+          )
+        .file("crate_main/src/main.rs",
+              "
+              extern crate crate_dep;
+
+              #[allow(unused_imports)]
+              use crate_dep::*;
+              fn main() {}
+              ")
+        .file(
+            "crate_dep/Cargo.toml",
+            r#"
+            [project]
+            name = "crate_dep"
+            version = "0.1.0"
+            authors = []
+            workspace = ".."
+
+            [features]
+            use_windows = []
+            use_linux = []
+            use_macos = []
+        "#,
+        )
+        .file("crate_dep/src/lib.rs",
+              r#"
+              #[cfg(feature = "use_windows")]
+              pub use std::os::windows;
+
+              #[cfg(feature = "use_linux")]
+              pub use std::os::linux;
+
+              #[cfg(feature = "use_macos")]
+              pub use std::os::unix;
+              "#);
+
+    let p = p.build();
+    p.cargo("build").run();
+}
